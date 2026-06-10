@@ -21,8 +21,8 @@
 final List<Employee> employeeList = [
   Employee(
     id: 'EMP001',
-    name: 'John Doe',
-    email: 'john@example.com',
+    name: 'deanerys',
+    email: 'dene@gmail.com',
     mobile: '9876543210',
     department: 'Flutter Development',
     location: 'Coimbatore',
@@ -30,8 +30,8 @@ final List<Employee> employeeList = [
   ),
   Employee(
     id: 'EMP002',
-    name: 'Jane Smith',
-    email: 'jane@example.com',
+    name: 'harry potter',
+    email: 'harry@gmail.com',
     mobile: '9876543211',
     department: 'UI/UX Design',
     location: 'Chennai',
@@ -39,8 +39,8 @@ final List<Employee> employeeList = [
   ),
   Employee(
     id: 'EMP003',
-    name: 'Raj Kumar',
-    email: 'raj@example.com',
+    name: 'jack sparrow',
+    email: 'jack@gmail.com',
     mobile: '9876543212',
     department: 'Backend Development',
     location: 'Bangalore',
@@ -48,8 +48,8 @@ final List<Employee> employeeList = [
   ),
   Employee(
     id: 'EMP004',
-    name: 'Priya Devi',
-    email: 'priya@example.com',
+    name: 'Pavithra',
+    email: 'pavithra@gmail.com',
     mobile: '9876543213',
     department: 'QA Testing',
     location: 'Hyderabad',

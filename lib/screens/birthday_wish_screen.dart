@@ -25,7 +25,6 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
   void initState() {
     super.initState();
     _wishedIds = {};
-    // Screen open aaana udane dialogs start aagum
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showNextWishDialog();
     });
@@ -35,6 +34,7 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
     if (_dialogIndex >= otherEmployees.length) return;
 
     final employee = otherEmployees[_dialogIndex];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
@@ -60,7 +60,11 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
             RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 14,
+                  // ✅ dark mode text color fix
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
                 children: [
                   TextSpan(
                     text: employee.name,
@@ -86,7 +90,6 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
                   _wishedIds.add(employee.id);
                   _dialogIndex++;
                 });
-                // Next colleague dialog
                 Future.delayed(const Duration(milliseconds: 300), () {
                   _showNextWishDialog();
                 });
@@ -97,10 +100,7 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Next',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Next', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -109,6 +109,8 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
   }
 
   void _showManualWishDialog(BuildContext context, Employee wisher) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     setState(() {
       _wishedIds.add(wisher.id);
     });
@@ -137,7 +139,11 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
             RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 14,
+                  // ✅ dark mode text color fix
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
                 children: [
                   TextSpan(
                     text: wisher.name,
@@ -164,10 +170,7 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Close',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Close', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -177,8 +180,12 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ dark mode detect
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF0F5),
+      // ✅ background dark mode fix
+      backgroundColor: isDark ? Colors.grey[900] : const Color(0xFFFFF0F5),
       appBar: AppBar(
         title: const Text('Birthday Wishes'),
         backgroundColor: Colors.pinkAccent,
@@ -218,17 +225,12 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
                   const SizedBox(height: 4),
                   Text(
                     widget.birthdayEmployee.department,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
+                        horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(20),
@@ -247,12 +249,13 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
 
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'Colleagues',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                // ✅ dark mode text fix
+                color: isDark ? Colors.white : Colors.black87,
               ),
             ),
             const SizedBox(height: 4),
@@ -300,9 +303,11 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
                             children: [
                               Text(
                                 employee.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
+                                  // ✅ dark mode text fix
+                                  color: isDark ? Colors.white : Colors.black87,
                                 ),
                               ),
                               const SizedBox(height: 3),
@@ -321,9 +326,7 @@ class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
                               ? null
                               : () => _showManualWishDialog(context, employee),
                           icon: Icon(
-                            isWished ? Icons.check : Icons.cake,
-                            size: 14,
-                          ),
+                              isWished ? Icons.check : Icons.cake, size: 14),
                           label: Text(isWished ? 'Wished!' : 'Wish'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
