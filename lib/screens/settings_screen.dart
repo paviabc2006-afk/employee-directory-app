@@ -1,9 +1,6 @@
 ﻿import 'package:flutter/material.dart';
-import '../widgets/settings_tile.dart';
+import 'language_screen.dart';
 import '../main.dart';
-import '../screens/privacy_policy_screen.dart';
-import '../screens/about_screen.dart';
-import '../screens/language_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,146 +10,128 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _isDarkMode = false;
+  bool _notifications = true;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: Colors.blue,
+        title: const Text(
+          'Settings',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color.fromARGB(255, 36, 125, 214),
         foregroundColor: Colors.white,
       ),
       body: Stack(
         children: [
-          // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/background.jpg',
+              'assets/images/background3.jpg',
               fit: BoxFit.cover,
             ),
           ),
-          // Overlay
-          Positioned.fill(
-            child: Container(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.75)
-                  : Colors.white.withValues(alpha: 0.85),
-            ),
-          ),
-          // Content
-          SingleChildScrollView(
+
+          ListView(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                const Text(
-                  'Settings',
-                  style: TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 37, 4, 4),
-                    letterSpacing: 1.2,
-                  ),
+            children: [
+              const Text(
+                "Settings",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 8),
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      SettingsTile(
-                        icon: Icons.notifications,
-                        label: 'Notifications',
-                        iconColor: Colors.orange,
-                      ),
-                      const Divider(height: 1),
-                      SwitchListTile(
-                        secondary: const Icon(
-                          Icons.dark_mode,
-                          color: Colors.indigo,
-                        ),
-                        title: const Text('Dark Mode'),
-                        value: _isDarkMode,
-                        onChanged: (value) {
-                          setState(() {
-                            _isDarkMode = value;
-                          });
-                          MyApp.of(context)?.toggleTheme(value);
-                        },
-                      ),
-                      const Divider(height: 1),
-                      SettingsTile(
-                        icon: Icons.language,
-                        label: 'Language',
-                        iconColor: Colors.green,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LanguageScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Card(
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text("Notifications"),
+                      subtitle: const Text("Enable app notifications"),
+                      value: _notifications,
+                      onChanged: (value) {
+                        setState(() {
+                          _notifications = value;
+                        });
+                      },
+                    ),
+
+                    const Divider(height: 1),
+
+                    SwitchListTile(
+                      title: const Text("Dark Mode"),
+                      subtitle: const Text("Enable dark theme"),
+                      value:
+                          Theme.of(context).brightness ==
+                          Brightness.dark,
+                      onChanged: (value) {
+                        MyApp.of(context)?.toggleTheme(value);
+                      },
+                    ),
+
+                    const Divider(height: 1),
+
+                    ListTile(
+                      title: const Text("Language"),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const LanguageScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'More',
-                  style: TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 31, 24, 24),
-                    letterSpacing: 1.2,
-                  ),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                "More",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 8),
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      SettingsTile(
-                        icon: Icons.privacy_tip,
-                        label: 'Privacy Policy',
-                        iconColor: Colors.red,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const PrivacyPolicyScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      SettingsTile(
-                        icon: Icons.info,
-                        label: 'About Application',
-                        iconColor: Colors.blue,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AboutScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: const Text("Privacy Policy"),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/privacy');
+                      },
+                    ),
+
+                    const Divider(height: 1),
+
+                    ListTile(
+                      title: const Text("About"),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/about');
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

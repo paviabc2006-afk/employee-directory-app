@@ -1,4 +1,6 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/employee_model.dart';
 
 class BirthdayWishScreen extends StatefulWidget {
@@ -14,339 +16,383 @@ class BirthdayWishScreen extends StatefulWidget {
 }
 
 class _BirthdayWishScreenState extends State<BirthdayWishScreen> {
-  late Set<String> _wishedIds;
-  int _dialogIndex = 0;
+  final TextEditingController _wishController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  List<Employee> get otherEmployees => employeeList
-      .where((e) => e.id != widget.birthdayEmployee.id)
-      .toList();
+  final Employee _currentUser =
+      employeeList.firstWhere((e) => e.id == 'EMP005');
+
+  List<Employee> get otherEmployees =>
+      employeeList.where((e) => e.id != widget.birthdayEmployee.id).toList();
+
+  String get _collectionId => 'wishes_${widget.birthdayEmployee.id}';
 
   @override
   void initState() {
     super.initState();
-    _wishedIds = {};
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showNextWishDialog();
+    _seedInitialWishes();
+  }
+
+  Future<void> _seedInitialWishes() async {
+    final snapshot = await _firestore.collection(_collectionId).limit(1).get();
+    if (snapshot.docs.isNotEmpty) return;
+
+    final seed = widget.birthdayEmployee.id.hashCode;
+    final random = Random(seed);
+
+    final othersExceptAdmin =
+        otherEmployees.where((e) => e.id != _currentUser.id).toList();
+
+    final wished =
+        othersExceptAdmin.where((_) => random.nextDouble() < 0.7).toList();
+
+    for (final e in wished) {
+      await _firestore.collection(_collectionId).add({
+        'wisherId': e.id,
+        'wisherName': e.name,
+        'wisherDepartment': e.department,
+        'message':
+            'Happy Birthday ${widget.birthdayEmployee.name}! 🎂 Wishing you a wonderful day filled with joy! 🎉',
+        'timestamp': FieldValue.serverTimestamp(),
+        'isAdmin': false,
+      });
+    }
+  }
+
+  Future<void> _sendWish() async {
+    final msg = _wishController.text.trim();
+    if (msg.isEmpty) return;
+
+    _wishController.clear();
+
+    await _firestore.collection(_collectionId).add({
+      'wisherId': _currentUser.id,
+      'wisherName': _currentUser.name,
+      'wisherDepartment': _currentUser.department,
+      'message': msg,
+      'timestamp': FieldValue.serverTimestamp(),
+      'isAdmin': true,
+    });
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     });
   }
 
-  void _showNextWishDialog() {
-    if (_dialogIndex >= otherEmployees.length) return;
-
-    final employee = otherEmployees[_dialogIndex];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🎂', style: TextStyle(fontSize: 60)),
-            const SizedBox(height: 12),
-            const Text(
-              'Wish Sent!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.pinkAccent,
-              ),
-            ),
-            const SizedBox(height: 8),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: 14,
-                  // ✅ dark mode text color fix
-                  color: isDark ? Colors.white70 : Colors.black87,
-                ),
-                children: [
-                  TextSpan(
-                    text: employee.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const TextSpan(text: ' wished '),
-                  TextSpan(
-                    text: widget.birthdayEmployee.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pinkAccent,
-                    ),
-                  ),
-                  const TextSpan(text: ' Happy Birthday! 🎉'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() {
-                  _wishedIds.add(employee.id);
-                  _dialogIndex++;
-                });
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  _showNextWishDialog();
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pinkAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Next', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showManualWishDialog(BuildContext context, Employee wisher) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    setState(() {
-      _wishedIds.add(wisher.id);
-    });
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🎂', style: TextStyle(fontSize: 60)),
-            const SizedBox(height: 12),
-            const Text(
-              'Wish Sent!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.pinkAccent,
-              ),
-            ),
-            const SizedBox(height: 8),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: 14,
-                  // ✅ dark mode text color fix
-                  color: isDark ? Colors.white70 : Colors.black87,
-                ),
-                children: [
-                  TextSpan(
-                    text: wisher.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const TextSpan(text: ' wished '),
-                  TextSpan(
-                    text: widget.birthdayEmployee.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pinkAccent,
-                    ),
-                  ),
-                  const TextSpan(text: ' Happy Birthday! 🎉'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pinkAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Close', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _wishController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ dark mode detect
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      // ✅ background dark mode fix
       backgroundColor: isDark ? Colors.grey[900] : const Color(0xFFFFF0F5),
       appBar: AppBar(
         title: const Text('Birthday Wishes'),
         backgroundColor: Colors.pinkAccent,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.pinkAccent, Colors.pink],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                children: [
-                  const Text('🎂', style: TextStyle(fontSize: 60)),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Today is the Birthday of',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.birthdayEmployee.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.birthdayEmployee.department,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_wishedIds.length} / ${otherEmployees.length} wished',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection(_collectionId)
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final docs = snapshot.data?.docs ?? [];
+                final wishedCount = docs.length;
+                final totalCount = otherEmployees.length;
 
-            const SizedBox(height: 24),
-
-            Text(
-              'Colleagues',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                // ✅ dark mode text fix
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Scroll panni wish pannunga!',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: otherEmployees.length,
-              itemBuilder: (context, index) {
-                final employee = otherEmployees[index];
-                final isWished = _wishedIds.contains(employee.id);
-
-                return Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor:
-                              isWished ? Colors.green : Colors.pinkAccent,
-                          child: Text(
-                            employee.name[0],
-                            style: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                return SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Colors.pinkAccent, Colors.pink],
                           ),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                employee.name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  // ✅ dark mode text fix
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
+                        child: Column(
+                          children: [
+                            const Text('🎂',
+                                style: TextStyle(fontSize: 60)),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Today is the Birthday of',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 13),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.birthdayEmployee.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                employee.department,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.birthdayEmployee.department,
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 13),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white24,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '$wishedCount / $totalCount wished',
                                 style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        ElevatedButton.icon(
-                          onPressed: isWished
-                              ? null
-                              : () => _showManualWishDialog(context, employee),
-                          icon: Icon(
-                              isWished ? Icons.check : Icons.cake, size: 14),
-                          label: Text(isWished ? 'Wished!' : 'Wish'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isWished ? Colors.green : Colors.pinkAccent,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.green,
-                            disabledForegroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Text(
+                        'Wishes Feed 💌',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting)
+                        const Center(
+                          child: CircularProgressIndicator(
+                              color: Colors.pinkAccent),
+                        )
+                      else if (docs.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Text(
+                              'No wishes yet! Be the first 🎂',
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white54
+                                    : Colors.black45,
+                              ),
                             ),
                           ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
+                            final data = docs[index].data()
+                                as Map<String, dynamic>;
+                            final isAdmin =
+                                data['wisherId'] == _currentUser.id;
+                            final wisherName =
+                                data['wisherName'] ?? 'Unknown';
+                            final department =
+                                data['wisherDepartment'] ?? '';
+                            final message = data['message'] ?? '';
+
+                            return Card(
+                              elevation: isAdmin ? 4 : 2,
+                              margin: const EdgeInsets.only(bottom: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: isAdmin
+                                    ? const BorderSide(
+                                        color: Colors.pinkAccent,
+                                        width: 1.5)
+                                    : BorderSide.none,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 22,
+                                      backgroundColor: isAdmin
+                                          ? Colors.pinkAccent
+                                          : Colors.green,
+                                      child: Text(
+                                        wisherName[0].toUpperCase(),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          RichText(
+                                            text: TextSpan(
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                              ),
+                                              children: [
+                                                TextSpan(
+                                                  text: isAdmin
+                                                      ? 'you'
+                                                      : wisherName,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                const TextSpan(
+                                                    text: ' wished '),
+                                                TextSpan(
+                                                  text: widget
+                                                      .birthdayEmployee.name,
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold,
+                                                    color: Colors.pinkAccent,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            message,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: isDark
+                                                  ? Colors.white70
+                                                  : Colors.black54,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            isAdmin ? 'You' : department,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Text('🎂',
+                                        style: TextStyle(fontSize: 20)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                 );
               },
             ),
-          ],
-        ),
+          ),
+
+          // Bottom send bar
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[850] : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.pinkAccent,
+                  child: Text(
+                    _currentUser.name[0].toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _wishController,
+                    decoration: InputDecoration(
+                      hintText: 'Write a birthday wish...',
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.grey[800]
+                          : const Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                    ),
+                    onSubmitted: (_) => _sendWish(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _sendWish,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: Colors.pinkAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.send,
+                        color: Colors.white, size: 20),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

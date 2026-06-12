@@ -8,8 +8,6 @@ class EmployeeListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Employees'),
@@ -21,19 +19,12 @@ class EmployeeListScreen extends StatelessWidget {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/background.jpg',
+              'assets/images/background1.jpg',
               fit: BoxFit.cover,
             ),
           ),
-          // Overlay
-          Positioned.fill(
-            child: Container(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.75)
-                  : Colors.white.withValues(alpha: 0.85),
-            ),
-          ),
-          // Content
+          
+          
           ListView.builder(
             itemCount: employeeList.length,
             itemBuilder: (context, index) {

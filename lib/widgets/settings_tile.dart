@@ -1,5 +1,4 @@
-﻿
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class SettingsTile extends StatelessWidget {
   final IconData icon;
@@ -17,6 +16,8 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -33,14 +34,12 @@ class SettingsTile extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.arrow_forward_ios,
         size: 16,
-        color: Color.fromARGB(255, 238, 17, 17),
+        color: colorScheme.onSurface.withValues(alpha: 0.5),
       ),
       onTap: onTap,
     );
   }
 }
-
-

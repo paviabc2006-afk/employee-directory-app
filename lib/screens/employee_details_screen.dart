@@ -12,109 +12,123 @@ class EmployeeDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Employee Details'),
         backgroundColor: const Color.fromARGB(255, 15, 82, 150),
         foregroundColor: const Color.fromARGB(255, 247, 242, 242),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-
-            // Profile Avatar
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: const Color.fromARGB(255, 152, 173, 194),
-              child: Text(
-                employee.name[0],
-                style: const TextStyle(
-                  fontSize: 40,
-                  color: Color.fromARGB(255, 224, 216, 216),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.jpg',
+              fit: BoxFit.cover,
             ),
-            const SizedBox(height: 16),
-
-            // Employee Name
-            Text(
-              employee.name,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          // Content
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height,
             ),
-            const SizedBox(height: 4),
-
-            // Department Badge
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 195, 241, 239),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                employee.department,
-                style: const TextStyle(
-                  color: Color.fromARGB(255, 40, 104, 104),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Info Tiles
-            Card(
-              elevation: 5,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  ProfileInfoTile(
-                    icon: Icons.badge,
-                    label: 'Employee ID',
-                    value: employee.id,
+                  const SizedBox(height: 20),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: colorScheme.primary,        
+                    child: Text(
+                      employee.name[0],
+                      style: const TextStyle(
+                        fontSize: 40,
+                        color: Colors.white,                      
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  const Divider(height: 2),
-                  ProfileInfoTile(
-                    icon: Icons.email,
-                    label: 'Email',
-                    value: employee.email,
+                  const SizedBox(height: 16),
+                  Text(
+                    employee.name,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black, 
+                    ),
                   ),
-                  const Divider(height: 2),
-                  ProfileInfoTile(
-                    icon: Icons.phone,
-                    label: 'Mobile',
-                    value: employee.mobile,
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.15), 
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      employee.department,
+                      style: TextStyle(
+                        color: colorScheme.primary,               
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                  const Divider(height: 2),
-                  ProfileInfoTile(
-                    icon: Icons.work,
-                    label: 'Department',
-                    value: employee.department,
+                  const SizedBox(height: 30),
+                  Card(
+                    elevation: 5,
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.55)   
+                        : Colors.white.withValues(alpha: 0.75),  
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        ProfileInfoTile(
+                          icon: Icons.badge,
+                          label: 'Employee ID',
+                          value: employee.id,
+                        ),
+                        const Divider(height: 2),
+                        ProfileInfoTile(
+                          icon: Icons.email,
+                          label: 'Email',
+                          value: employee.email,
+                        ),
+                        const Divider(height: 2),
+                        ProfileInfoTile(
+                          icon: Icons.phone,
+                          label: 'Mobile',
+                          value: employee.mobile,
+                        ),
+                        const Divider(height: 2),
+                        ProfileInfoTile(
+                          icon: Icons.work,
+                          label: 'Department',
+                          value: employee.department,
+                        ),
+                        const Divider(height: 2),
+                        ProfileInfoTile(
+                          icon: Icons.location_on,
+                          label: 'Location',
+                          value: employee.location,
+                        ),
+                      ],
+                    ),
                   ),
-                  const Divider(height: 2),
-                  ProfileInfoTile(
-                    icon: Icons.location_on,
-                    label: 'Location',
-                    value: employee.location,
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
-
-

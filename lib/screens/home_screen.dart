@@ -1,10 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import '../constants/app_strings.dart';
 import '../models/employee_model.dart';
+import '../providers/notification_provider.dart';
 import 'employee_list_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'birthday_wish_screen.dart';
+import 'notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  final _provider = NotificationProvider();
 
   final List<Widget> _screens = [
     const HomeContent(),
@@ -23,9 +26,28 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _provider.addListener(_refresh);
+  }
+
+  @override
+  void dispose() {
+    _provider.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() => setState(() {});
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -33,8 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = index;
           });
         },
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: const Color.fromARGB(255, 0, 0, 0),
+        selectedItemColor: isDark
+            ? Colors.white
+            : const Color.fromARGB(255, 125, 178, 221),
+        unselectedItemColor: isDark
+            ? Colors.white60
+            : const Color.fromARGB(255, 51, 56, 33),
+        selectedFontSize: 18,
+        unselectedFontSize: 15,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Employees'),
@@ -45,22 +74,46 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
 
-  Employee get _todayBirthdayEmp {
+  @override
+  State<HomeContent> createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<HomeContent> {
+  final _provider = NotificationProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _provider.addListener(_refresh);
+  }
+
+  @override
+  void dispose() {
+    _provider.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() => setState(() {});
+
+  Employee? get _todayBirthdayEmp {
     final now = DateTime.now();
     final today =
-        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}';
-    return employeeList.firstWhere(
-      (e) => e.birthday == today,
-      orElse: () => employeeList[0],
-    );
+        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+    try {
+      return employeeList.firstWhere((e) => e.birthday == today);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final birthdayEmp = _todayBirthdayEmp;
+    final unreadCount = _provider.unreadCount;
 
     return Scaffold(
       appBar: AppBar(
@@ -68,32 +121,63 @@ class HomeContent extends StatelessWidget {
           'Flutter App',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color.fromARGB(255, 63, 138, 214),
-        actions: const [
+        backgroundColor: const Color.fromARGB(255, 36, 125, 214),
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.notifications, color: Colors.white),
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationScreen(),
+                  ),
+                );
+              },
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.notifications,
+                      color: Color.fromARGB(255, 250, 248, 248)),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: -6,
+                      right: -6,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          unreadCount > 9 ? '9+' : '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
       body: Stack(
         children: [
-          // ✅ Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/background.jpg',
+              'assets/images/background4.jpg',
               fit: BoxFit.cover,
             ),
           ),
-          // ✅ Overlay - dark/light mode
-          Positioned.fill(
-            child: Container(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.75)
-                  : Colors.white.withValues(alpha: 0.85),
-            ),
-          ),
-          // ✅ Content
           Column(
             children: [
               Expanded(
@@ -106,17 +190,21 @@ class HomeContent extends StatelessWidget {
                       Text(
                         'Welcome Back!',
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 25,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
+                          color: isDark
+                              ? const Color.fromARGB(255, 2, 1, 1)
+                              : Colors.black87,
                         ),
                       ),
                       Text(
                         'Have a great day',
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white70 : Colors.black54,
+                          color: isDark
+                              ? const Color.fromARGB(179, 0, 0, 0)
+                              : Colors.black54,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -133,7 +221,7 @@ class HomeContent extends StatelessWidget {
                             icon: Icons.people,
                             title: 'Employees',
                             subtitle: 'View Directory',
-                            color: const Color.fromARGB(255, 223, 17, 171),
+                            color: const Color.fromARGB(255, 0, 0, 0),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -149,7 +237,7 @@ class HomeContent extends StatelessWidget {
                             icon: Icons.person,
                             title: 'Profile',
                             subtitle: 'Details',
-                            color: Colors.blueAccent,
+                            color: const Color.fromARGB(255, 0, 0, 0),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -165,7 +253,7 @@ class HomeContent extends StatelessWidget {
                             title: 'Settings',
                             subtitle: 'Preferences',
                             color: isDark
-                                ? Colors.white
+                                ? const Color.fromARGB(255, 2, 1, 1)
                                 : const Color.fromARGB(255, 5, 5, 5),
                             onTap: () {
                               Navigator.push(
@@ -179,36 +267,43 @@ class HomeContent extends StatelessWidget {
                           Container(
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : const Color.fromARGB(255, 221, 222, 223)
-                                      .withValues(alpha: 0.15),
+                                  ? const Color.fromARGB(255, 97, 19, 45)
+                                      .withValues(alpha: 0.1)
+                                  : const Color.fromARGB(255, 68, 5, 87)
+                                      .withValues(alpha: 0.4),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                  color:
-                                      Colors.blueAccent.withValues(alpha: 0.3)),
+                                  color: Colors.blueAccent
+                                      .withValues(alpha: 0.3)),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.bar_chart,
-                                    size: 36, color: Colors.blueAccent),
+                                Icon(Icons.bar_chart,
+                                    size: 36,
+                                    color: isDark
+                                        ? const Color.fromARGB(255, 0, 0, 0)
+                                        : const Color.fromARGB(255, 0, 0, 0)),
                                 const SizedBox(height: 8),
                                 Text(
                                   'Short description',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
                                     color: isDark
-                                        ? Colors.white60
-                                        : Colors.black54,
+                                        ? const Color.fromARGB(255, 44, 21, 21)
+                                        : const Color.fromARGB(255, 0, 0, 0),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '${employeeList.length} Employees Active',
-                                  style: const TextStyle(
-                                    fontSize: 13,
+                                  style: TextStyle(
+                                    fontSize: 19,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.blueAccent,
+                                    color: isDark
+                                        ? const Color.fromARGB(255, 3, 2, 2)
+                                        : const Color.fromARGB(255, 0, 0, 0),
                                   ),
                                 ),
                               ],
@@ -227,34 +322,51 @@ class HomeContent extends StatelessWidget {
                 color: isDark
                     ? Colors.pink.withValues(alpha: 0.2)
                     : const Color.fromARGB(255, 236, 202, 213),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BirthdayWishScreen(
-                          birthdayEmployee: _todayBirthdayEmp,
+                child: birthdayEmp != null
+                    ? ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BirthdayWishScreen(
+                                birthdayEmployee: birthdayEmp,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Text('🎂', style: TextStyle(fontSize: 18)),
+                        label: Text(
+                          "Today's Birthday - ${birthdayEmp.name.split(' ')[0]}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.pinkAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(120),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(120),
+                        ),
+                        child: const Text(
+                          '🎈No one Has Birthday today!',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
                         ),
                       ),
-                    );
-                  },
-                  icon: const Text('🎂', style: TextStyle(fontSize: 18)),
-                  label: Text(
-                    "Today's Birthday - ${_todayBirthdayEmp.name.split(' ')[0]}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pinkAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
               ),
             ],
           ),
@@ -278,12 +390,12 @@ class HomeContent extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.grey[850]!.withValues(alpha: 0.8)
-              : Colors.white.withValues(alpha: 0.9),
+              ? const Color.fromARGB(255, 153, 140, 140).withValues(alpha: 0.5)
+              : const Color.fromARGB(255, 68, 5, 87).withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
-              color: Colors.black12,
+              color: Color.fromARGB(31, 0, 0, 0),
               blurRadius: 6,
               offset: Offset(0, 3),
             ),
@@ -299,15 +411,20 @@ class HomeContent extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
+                color: isDark
+                    ? const Color.fromARGB(255, 3, 2, 2)
+                    : Colors.black87,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white54 : Colors.black45,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDark
+                    ? const Color.fromARGB(135, 0, 0, 0)
+                    : Colors.black45,
               ),
             ),
           ],

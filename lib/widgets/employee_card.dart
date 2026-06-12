@@ -13,10 +13,16 @@ class EmployeeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Card(
         elevation: 3,
+        color: isDark
+            ? Colors.grey[850]!.withValues(alpha: 0.5)  
+            : Colors.white.withValues(alpha: 0.45),    
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -25,55 +31,55 @@ class EmployeeCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Profile Avatar
               CircleAvatar(
                 radius: 28,
-                backgroundColor: const Color.fromARGB(255, 190, 18, 84),
+                backgroundColor: colorScheme.primary,          
                 child: Text(
                   employee.name[0],
                   style: const TextStyle(
                     fontSize: 24,
-                    color: Color.fromARGB(255, 214, 198, 198),
+                    color: Colors.white,                        
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-
-              // Employee Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       employee.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,           
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       employee.id,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Color.fromARGB(255, 221, 14, 14),
+                        color: colorScheme.onSurface.withValues(alpha: 0.6), 
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       employee.department,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Color.fromARGB(255, 12, 68, 165),
+                        color: colorScheme.primary,             
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Arrow Icon
-              const Icon(Icons.arrow_forward_ios, size: 16, color: Color.fromARGB(255, 167, 8, 8)),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: colorScheme.onSurface.withValues(alpha: 0.5), 
+              ),
             ],
           ),
         ),
@@ -81,5 +87,3 @@ class EmployeeCard extends StatelessWidget {
     );
   }
 }
-
-

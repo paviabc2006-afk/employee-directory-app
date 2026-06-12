@@ -1,5 +1,4 @@
-﻿
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class CustomButton extends StatelessWidget {
   final String label;
@@ -21,12 +20,12 @@ class CustomButton extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon, color: const Color.fromARGB(255, 3, 0, 0)),
+        icon: Icon(icon, color: const Color.fromARGB(255, 250, 246, 246)), 
         label: Text(
           label,
           style: const TextStyle(
             fontSize: 16,
-            color: Color.fromARGB(255, 155, 26, 26),
+            color: Colors.white, 
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -41,5 +40,3 @@ class CustomButton extends StatelessWidget {
     );
   }
 }
-
-
